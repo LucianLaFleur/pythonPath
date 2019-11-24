@@ -70,14 +70,23 @@ class Scanner:
         forms = self.extract_forms(link)
         for form in forms:
           # testing....
+          is_vulnerable_to_xss = self.test_xss_in_form(form, link)
+          if is_vulnerable_to_xss:
+            print("XSS vulnerability discovered in " + link + "in")
+            print(form)
         if "=" in link:
+          is_vulnerable_to_xss = self.test_xss_in_link(link)
+          if is_vulnerable_to_xss:
+            print("XSS URL vulnerability detected in " + link)
           #  test 2  
   def test_xss_in_link(self, url):
     # insert test script in tags below
     xss_test_script = "<scriPt></sCript>"
     response = self.submit_form(form, xss_test_script, url)
-    if xss_test_script in response.content:
-      return True
+    # shorthand for below, give True if the script makes it into the content
+    return xss_test_script in response.content
+    # if xss_test_script in response.content:
+    #   return True
 
     def test_xss_in_form(self, form, url):
       # modify script below with JS or a call to a js file

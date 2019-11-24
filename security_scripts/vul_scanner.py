@@ -16,8 +16,13 @@ data_dict = {"username": "admin", "password": "12345", "Login": "submit"}
 vuln_scanner = scanner.Scanner(target_url)
 # the "post" action allows you to send a post request with the dictionary k/v's what we set-up before.
 vuln_scanner.session.post("http://url/path/here", data=data_dict)
-# vuln_scanner.crawl()
 
-forms = vuln_scanner.extract_forms("http://target/url/path222")
-response = vuln_scanner.test_xss_in_form(forms[0], "http://target/url/path222" )
-print(response)
+vuln_scanner.crawl()
+
+vuln_scanner.run_scanner()
+
+# forms = vuln_scanner.extract_forms("http://target/url/path222")
+# response = vuln_scanner.test_xss_in_form(forms[0], "http://target/url/path222" )
+# to test in url:
+# response = vuln_scanner.test_xss_in_link("target/url/here")
+# print(response)
