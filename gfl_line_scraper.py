@@ -78,7 +78,7 @@ for x in gibberish_list:
 
 
 print(str(counter1) + " lines added to arr")
-# doc.save('t777.docx')
+doc.save('t777.docx')
 
 # table_data = (q_soup.find_all("td"))
 # for x in table_data:
