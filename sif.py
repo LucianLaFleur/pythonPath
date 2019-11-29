@@ -51,6 +51,9 @@ import re
 # a2 = re.findall("[^\D]*$", a)[0]
 # print(a2)
 
+# Dev note:
+  # .find_all('tag', recursive=False) will only find direct descendants
+
 # beautiful soup find by attribute
 # var111 = content_pg_soup.findall('div', lang="en")
 
@@ -71,3 +74,13 @@ import re
 # list1 = range(2, 14)
 # for y in list1:
 #   print(y)
+
+# replace "T-dollIndex" at end of url with tdoll_name var.
+# re.sub("T-.*$", tdoll_name, index_url)
+
+# getting an attribute's content from a list of tags, then checking if they're a gif-type
+for x in soup.findAll('img'):
+    img_title = str(x.get("title"))
+    # gif type targeted here
+    if img_title[-4:] == ".gif":
+      found_gif_link = x.parent.get("href")

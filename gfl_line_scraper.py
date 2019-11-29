@@ -2,83 +2,149 @@ from __future__ import unicode_literals
 import docx
 import ftfy
 import sys
-import codecs
 from bs4 import BeautifulSoup as bs
 import requests
 import os
 import re
+import time
 # -*- coding: utf-8 -*-
 
-# insert site url below
-# for weapon info extraction : https://en.gfwiki.com/wiki/M500
-# quote extraction, obviously: https://en.gfwiki.com/wiki/M500/Quotes
-url = 'https://en.gfwiki.com/wiki/MAC-10'
+# Quotes#Combat
+# Quotes#Events
 
-headers = {"Connection":"keep-alive",'User-Agent': 'Mozilla/5.0'}
+# CURR: Get doll url's from index page
 
-html_page = requests.get(url, headers=headers)
+# Extract weapon background, design, and trivia notes for English proofreading
 
-soup = bs(html_page.text, "html.parser")
+library_page = "https://en.gfwiki.com/wiki/T-Doll_Index"
+base_url = "https://en.gfwiki.com/wiki/"
 
-# extract the character's name from the wiki page
-notimportant1, notimportant2, tdoll_name = url.partition("wiki/")
+def get_soup(url):
+  headers = {"Connection":"keep-alive",'User-Agent': 'Mozilla/5.0'}
+  html_page = requests.get(url, headers=headers)
+  return bs(html_page.text, "html.parser")
 
-# imgdata = {}
-# for img in soup.find_all('img'):
-#   imgdata[(img.get('src'))] = img.get('title')
+# finds the card data from the inxed
+def find_initial_data_from_soup(soup):
+  # target class carrying key info inside is "card-bg-small" on this site
+  all_span_cards = soup.find_all("span", class_="card-bg-small")
+  return all_span_cards
 
-paragraphs = []
+# now we start extracting specific data from the html containing stuff we're interested in
+def get_names_from_data(data_list):
+  name_list = []
+  #  Note !!! shortening this to test the first 4 names !!!
+  for x in data_list[0:4]:
+    name = x.find("span", class_="name").text
+    name_list.append(name)
+  return name_list
 
-for p_tag_data in soup.find_all('p'):
-  paragraphs.append(p_tag_data)
+def generate_urls_from_names(name_list, base_url):
+  character_urls = [] 
+  for name in name_list:
+    named_url = (base_url + name)
+    character_urls.append(named_url)
+  return character_urls
 
-# for x in paragraphs:
-#   print(x)
+# Stuff for once you're on the character's webpage
+# !!! Grab the weapon background from the base doll's page
+def find_weapon_info(soup):
+  wep_info = soup.find(text="Weapon Background").find_next(text="Weapon Background").find_next('p').contents[0]
+  return wep_info
 
-# !!! Grabs the weapon background from the base doll's page
-# Call find next twice to get second instance of this text line because the first is a nav link, the second is the target header
-wep_bg_p = soup.find(text="Weapon Background").find_next(text="Weapon Background").find_next('p').contents[0]
+def find_design_info(soup):
+  try:
+    #design_note is var for design info bits
+    design_note = soup.find(id="Design").find_next('p').contents[0]
+    # print("design note: --- " + design_note)
+    return design_note
+  except:
+    print("No design info scanned for : " + tdoll_name)
+    return(None)
 
-# print(wep_bg_p)
+def find_trivia_info(soup):
+  try:
+    # trivia_note is var for all trivia text bits
+    trivia_note = soup.find(id="Trivia").find_next('ul').find_all('li', recursive=False)
+    # print(trivia_note)
+    all_trivia_list = []
+    for x in trivia_note:
+      bare_text = x.text.strip()
+      all_trivia_list.append(bare_text)
+      # print(bare_text + "\n")
+    return all_trivia_list
+  except:
+    print("no trivia details found for " + tdoll_name)
+    return(None)
+
+# Doll icon extaraction works, but I'm not using it for anything
+# def get_doll_icon_src(data_list): 
+#   doll_icon_list = []
+#   for x in data_list[0:4]:
+#     icon = x.find("img", class_="doll-image").get("src")
+#     doll_icon_list.append(icon)
+#   return doll_icon_list
+
+# run that shit:
+tdoll_index_soup = get_soup(library_page)
+data_list = find_initial_data_from_soup(tdoll_index_soup)
+print("[ + ] added " + str(len(data_list)) + " items to index data array...")
+# Add below dynamically to class
+name_list = get_names_from_data(data_list)
+# icon_list = get_doll_icon_src(data_list)
+char_pg_urls = generate_urls_from_names(name_list, base_url)
+print(char_pg_urls)
+
+# ////////////////
+
+# #  find all images, extract to function
+# # imgdata = {}
+# # for img in soup.find_all('img'):
+# #   imgdata[(img.get('src'))] = img.get('title')
+
+
+
+  
 
 # ///////////////////////////////////
 
-quotes_link = url + "/Quotes"
-# headers already declared at top of page
-q_html = requests.get(quotes_link, headers=headers)
-q_soup = bs(q_html.text, "html.parser")
+# quotes_link = url + "/Quotes"
+# # headers already declared at top of page
+# q_html = requests.get(quotes_link, headers=headers)
+# q_soup = bs(q_html.text, "html.parser")
 
-audio_source_list = []
+# audio_source_list = []
 
-aud_tags = q_soup.select(".audio-button")
-for x in aud_tags:
-  audio_source_list.append(x.get("data-src"))
+# aud_tags = q_soup.select(".audio-button")
+# for x in aud_tags:
+#   audio_source_list.append(x.get("data-src"))
 
-gibberish_list = (q_soup.find_all(class_="audio-button"))
+# gibberish_list = (q_soup.find_all(class_="audio-button"))
 
-japanese_text = []
+# japanese_text = []
 
-# Document() remains empty to make a new document, but needs the name called in "doc.save()" thereafter
-doc = docx.Document()
+# # Document() remains empty to make a new document, but needs the name called in "doc.save()" thereafter
+# doc = docx.Document()
 
-doc.add_paragraph('Test from python placeholder 7')
+# doc.add_paragraph('Test from python placeholder 7')
 
-counter1 = 0
-for x in gibberish_list:
-  question_marks = x.parent.text
-  purified_line = ftfy.fix_encoding(question_marks)
-  # question_marks = x.parent.text.encode('ascii', 'replace')
-  # jpn_line = question_marks[0:-5]
-  jpn_line = purified_line[0:-5]
-  if jpn_line:
-    counter1 +=1
-    fixed_japanese = (ftfy.fix_text(jpn_line))
-    # doc.add_paragraph(fixed_japanese)
-    japanese_text.append(fixed_japanese)
+# counter1 = 0
+# for x in gibberish_list:
+#   question_marks = x.parent.text
+#   purified_line = ftfy.fix_encoding(question_marks)
+#   # question_marks = x.parent.text.encode('ascii', 'replace')
+#   # jpn_line = question_marks[0:-5]
+#   # slice gets rid of "play" at the end of 'em all
+#   jpn_line = purified_line[0:-5]
+#   if jpn_line:
+#     counter1 +=1
+#     fixed_japanese = (ftfy.fix_text(jpn_line))
+#     # doc.add_paragraph(fixed_japanese)
+#     japanese_text.append(fixed_japanese)
 
 
-print(str(counter1) + " lines added to arr")
-doc.save('t777.docx')
+# print(str(counter1) + " lines added to arr")
+# doc.save('t777.docx')
 
 # table_data = (q_soup.find_all("td"))
 # for x in table_data:

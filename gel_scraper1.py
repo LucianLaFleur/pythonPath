@@ -3,11 +3,11 @@ from bs4 import BeautifulSoup as bs
 import urllib2
 import os
 
-# Scrape only "safe" images from Gelbooru's site
+# goal: data for images from Gelbooru's site
 
 # insert site url below
 
-html_page = urllib2.urlopen("https://gelbooru.com/index.php?page=post&s=list&tags=j%40ck")
+# html_page = urllib2.urlopen("https://gelbooru.com/index.php?page=post&s=list&tags=j%40ck")
 
 # grab the page data with "get"
 # resp = requests.get(url)
