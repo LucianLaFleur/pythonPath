@@ -9,15 +9,9 @@ import re
 import time
 # -*- coding: utf-8 -*-
 
-# Quotes#Combat
-# Quotes#Events
-
-# CURR: Get doll url's from index page
-
-# Extract weapon background, design, and trivia notes for English proofreading
-
 library_page = "https://en.gfwiki.com/wiki/T-Doll_Index"
 base_url = "https://en.gfwiki.com/wiki/"
+src_root = "https://en.gfwiki.com/"
 
 def get_soup(url):
   headers = {"Connection":"keep-alive",'User-Agent': 'Mozilla/5.0'}
@@ -143,8 +137,9 @@ def extract_char_info(soup):
   y = find_design_info(soup)
   z = find_trivia_info(soup)
   suite = ("---weapon design ---\n" + x + "\n --- Char design/attire --- \n" + y + "\n --- Trivia Bullets --- \n" + z).encode('ascii', 'replace')
+  # NOTE: purifying mojibake??
   return suite
-  # returns a paragraph with nicely set
+  # returns a paragraph-long string
 
 # Doll icon extaraction works, but I'm not using it for anything
 # def get_doll_icon_src(data_list): 
@@ -165,15 +160,110 @@ char_pg_urls = generate_urls_from_names(name_list, base_url)
 # do the whole data-extraction gig in a for-each loop to go over all urls
 
 # t1 = char_pg_urls[9]
-t1 = "https://en.gfwiki.com/wiki/C96"
+# mod3 included
+t1 = "https://en.gfwiki.com/wiki/M4_SOPMOD_II"
+# irregular, limited info, but normal num of tables, just some are absent content:
+# t1 = "https://en.gfwiki.com/wiki/Jill"
+# t1 = "https://en.gfwiki.com/wiki/C96"
 
 print("testing character url at:  -> " + t1)
 test_soup = get_soup(t1)
-print("Processing character info...")
+# print("Processing character info...")
 char_info_suite = extract_char_info(test_soup)
 # NOTE: be sure to purify mojibake before printing the char_info_suite to a document, as the odd chars are currently ?'s
 test_quote_url = (t1 + "/Quotes")
-print(test_quote_url)
+t1_quote_soup = get_soup(test_quote_url)
+
+all_tbody_tags = t1_quote_soup.find_all("tbody")
+
+if len(all_tbody_tags) == 4:
+  # print("Regular quotes found")
+  general_quotes = all_tbody_tags[1]
+  combat_quotes = all_tbody_tags[2]
+  event_quotes = all_tbody_tags[3]
+# Make exception for additional tables for MOD3
+elif len(all_tbody_tags) == 7:
+  # print("Mod3 quotes found")
+  general_quotes = all_tbody_tags[1]
+  combat_quotes = all_tbody_tags[2]
+  event_quotes = all_tbody_tags[3]
+  mod3_general_quotes = all_tbody_tags[4]
+  mod3_combat_quotes = all_tbody_tags[5]
+  mod3_event_quotes = all_tbody_tags[6]
+else:
+  print("Irregular num of quote tables for " + t1)
+
+# idx 0 should be title, 2 -> Japanese, 4 -> English
+# <tr>
+# <td style="background:rgba(0, 0, 0, 0.6)">Acquisition
+# </td>
+# <td style="background:rgba(0, 0, 0, 0.6)">???
+# </td>
+# <td style="background:rgba(0, 0, 0, 0.6)">???<span class="audio-button" data-src="https://en.gfwiki.com/images/f/f8/C96_GAIN_JP.ogg" style="display:block"><a href="/wiki/File:C96_GAIN_JP.ogg" title="File:C96 GAIN JP.ogg">Play</a></span>
+# </td>
+# <td style="background:rgba(0, 0, 0, 0.6)">???
+# </td>
+# <td style="background:rgba(0, 0, 0, 0.6)">You're my Commander, aren't you? </td></tr>
+
+
+gen_rows = general_quotes.find_all('tr')
+# remove junk data in 0 idx row
+del gen_rows[0]
+
+# NOTE: [  :::  ] incomplete [  :::  ]
+# ENCAPSULATE: for each item in the row table, extract row data and the audio
+# for each row in range(0, len(gen_rows))
+
+# get all the table-data from within the row
+rd_list = gen_rows[0].find_all("td")
+
+# belowgets the audio src
+aud_href = gen_rows[4].find("a", text="Play").get("href")
+if aud_href:
+  aud_src = src_root + aud_href
+else:
+  aud_src = "No audio available"
+
+# UNUSED, not needed as title is in audiofile name ; checks for row title
+# if rd_list[0].text.strip():
+#   title_rd = rd_list[0].text.strip()
+# else:
+#   print("No title found")
+#   title_rd = "untitled row"
+
+# check for JPN content
+if rd_list[2].text.strip():
+  jpn_rd = rd_list[2].text.strip()
+  # slice out the unneeded "play" text that appears
+  jpn_rd = jpn_rd[:-4]
+else:
+  print("No Jpn text found")
+  jpn_rd = "[-] No Jpn"
+
+# check for English content
+if rd_list[4].text.strip():
+  eng_rd = rd_list[4].text.strip()
+else:
+  print("No Eng text found")
+  end_rd = "[-] No Eng"
+
+print("testing extracted vals")
+print("---")
+time.sleep(1)
+#Title, Japanese, and translation successfully extracted!
+extracted_rd = [aud_src, jpn_rd, eng_rd]
+for x in extracted_rd:
+  print(x.encode('ascii', 'replace'))
+  print("~~~")
+
+
+# for x in gen_rows:
+#   try:
+#     print(x)
+#     print("---   end of row " + str(gr_idx) + " ---")
+#   except:
+#     print("skipped unprintible chars")
+#   gr_idx += 1
 
 # ///////////////////////////////////
 

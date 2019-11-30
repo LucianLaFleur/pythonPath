@@ -76,10 +76,11 @@ import re
 # purified_jpn = ftfy.fix_encoding(jpn_line)
 # fixed_jpn = ftfy.fix_text(purified_jpn)
 
-# make a list from a range ---
+# make a list from a range --- 
 # list1 = range(2, 14)
 # for y in list1:
 #   print(y)
+#  prints 2 thru 13 (up to but not including second arg, 14)
 
 # replace "T-dollIndex" at end of url with tdoll_name var.
 # re.sub("T-.*$", tdoll_name, index_url)
@@ -93,3 +94,6 @@ import re
 
 # Handle un-printible chars by replacement:
 # txt_content.encode('ascii', 'replace')
+
+# find all sibling elements on a level
+# trivia_bullets = soup.find(id="Trivia").find_next('ul').find_all('li', recursive=False)
