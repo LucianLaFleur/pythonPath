@@ -57,6 +57,12 @@ import re
 # beautiful soup find by attribute
 # var111 = content_pg_soup.findall('div', lang="en")
 
+# # image extraction from bauitufl soup example 
+# #  find all images, extract to function
+# # imgdata = {}
+# # for img in soup.find_all('img'):
+# #   imgdata[(img.get('src'))] = img.get('title')
+
 # writing unicode chars to proper letter output in a word file
 
 # doc = docx.Document()

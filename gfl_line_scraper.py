@@ -46,20 +46,49 @@ def generate_urls_from_names(name_list, base_url):
     character_urls.append(named_url)
   return character_urls
 
-# Stuff for once you're on the character's webpage
-# !!! Grab the weapon background from the base doll's page
 def find_weapon_info(soup):
-  wep_info = soup.find(text="Weapon Background").find_next(text="Weapon Background").find_next('p').text
-  return wep_info
+  try:
+    wep_note = ""
+    info1 = soup.find(text="Weapon Background").find_next(text="Weapon Background").find_next('p')
+    wep_note += ("\t" + info1.text)
+    cou = 0
+    while True:
+      next_tag_type = info1.next_element.name
+      # end the loop when h2 is encountered
+      if next_tag_type == "h2":
+        # print("[+][+] --> h2 found! Ending design section search...")
+        break
+      # Will grab text from any p or ul elements
+      elif next_tag_type == "p" or next_tag_type == "ul":
+        txt_content = info1.next_element.text
+        try:
+          # get the text of the next element we're peeking at
+          wep_note += ("\t" + txt_content)
+        except:
+          # if weird chars show up, just give me question marks
+          txt_content = txt_content.encode('ascii', 'replace')
+          wep_note += ("\t" + txt_content)
+      elif cou >= 40:
+        print("Weapon info loop exceeded 40 runs")
+        break
+      # else:
+        # print("ignored non-target tag...")
+      # make current element the next element
+      info1 = info1.next_element
+      # bump up saftey net counter
+      cou += 1
+  except:
+    return "[-] No weapon details"
+  return wep_note
 
 # get all text content until you run into an h2 tag
 def find_design_info(soup):
-  # try:
+  try:
     #design_note is var for design info bits
     design_note = ""
     design_header = soup.find(id="Design")
     p1 = design_header.next_element.next_element.next_element
-    design_note += p1.text
+    design_note += ("\t" + p1.text)
     cou = 0
     while True:
       next_tag_type = p1.next_element.name
@@ -72,21 +101,20 @@ def find_design_info(soup):
         txt_content = p1.next_element.text
         try:
           # get the text of the next element we're peeking at
-          design_note += txt_content
+          design_note += ("\t" + txt_content)
         except:
           # if weird chars show up, just give me question marks
          txt_content = txt_content.encode('ascii', 'replace')
-         design_note += txt_content
+         design_note += ("\t" + txt_content)
       elif cou >= 48:
-        print("loop exceeded 48 runs")
+        print("Loop exceeded 48 runs")
         break
-      # else:
-        # print("ignored non-target tag...")
       # make current element the next element
       p1 = p1.next_element
-      # bump up saftey net counter
       cou += 1
-    return design_note
+  except:
+    return "[-] No design details"
+  return design_note
 
 # find all <li> 's since the entire data set is contained in them
 def find_trivia_info(soup):
@@ -96,24 +124,28 @@ def find_trivia_info(soup):
     trivia_paragraph = ""
     # all_trivia_list = []
     for x in trivia_bullets:
-      bare_text = x.text.strip()
+      bare_text = x.text
       try:
-        trivia_paragraph += ("\t" + bare_text + '\n')
+        trivia_paragraph += ("\t" + bare_text)
       # all_trivia_list.append(bare_text)
       # print(bare_text + "\n")
       except:
-        bare_text = ("\t" + bare_text.encode('ascii', 'replace') + '\n')
+        bare_text = ("\t" + bare_text.encode('ascii', 'replace'))
         trivia_paragraph += bare_text
     # return all_trivia_list
     return trivia_paragraph
   except:
-    return "no trivia details"
+    return "[-] No trivia details"
 
-# def extract_char_info(soup):
-#   x = find_weapon_info(soup)
-#   y = find_design_info(soup)
-#   z = find_trivia_info(soup)
-#   return [x, y, z]
+# Search all info units on the soup for the char's homepage
+def extract_char_info(soup):
+  x = find_weapon_info(soup)
+  y = find_design_info(soup)
+  z = find_trivia_info(soup)
+  suite = ("---weapon design ---\n" + x + "\n --- Char design/attire --- \n" + y + "\n --- Trivia Bullets --- \n" + z).encode('ascii', 'replace')
+  return suite
+  # returns a paragraph with nicely set
+
 # Doll icon extaraction works, but I'm not using it for anything
 # def get_doll_icon_src(data_list): 
 #   doll_icon_list = []
@@ -122,7 +154,7 @@ def find_trivia_info(soup):
 #     doll_icon_list.append(icon)
 #   return doll_icon_list
 
-# run that shit:
+# //// info extraction portion and method execution
 tdoll_index_soup = get_soup(library_page)
 data_list = find_initial_data_from_soup(tdoll_index_soup)
 # print("[ + ] added " + str(len(data_list)) + " items to index data array...")
@@ -132,30 +164,16 @@ name_list = get_names_from_data(data_list)
 char_pg_urls = generate_urls_from_names(name_list, base_url)
 # do the whole data-extraction gig in a for-each loop to go over all urls
 
-# t1 = char_pg_urls[69]
+# t1 = char_pg_urls[9]
 t1 = "https://en.gfwiki.com/wiki/C96"
 
 print("testing character url at:  -> " + t1)
 test_soup = get_soup(t1)
-# captured design in --> design_info_paragraph
-design_info_paragraph = (find_design_info(test_soup))
-trivia_paragraph = (find_trivia_info(test_soup))
-print(design_info_paragraph)
-# print(find_weapon_info(test_soup))
-
-# print(find_weapon_info(test_soup))
-
-# test_extraction = extract_char_info(test_soup)
-# for x in test_extraction:
-#   print(name_list[69] + "\n" + x)
-
-# ////////////////
-
-# #  find all images, extract to function
-# # imgdata = {}
-# # for img in soup.find_all('img'):
-# #   imgdata[(img.get('src'))] = img.get('title')
-
+print("Processing character info...")
+char_info_suite = extract_char_info(test_soup)
+# NOTE: be sure to purify mojibake before printing the char_info_suite to a document, as the odd chars are currently ?'s
+test_quote_url = (t1 + "/Quotes")
+print(test_quote_url)
 
 # ///////////////////////////////////
 
@@ -165,57 +183,24 @@ print(design_info_paragraph)
 # q_soup = bs(q_html.text, "html.parser")
 
 # audio_source_list = []
-
 # aud_tags = q_soup.select(".audio-button")
 # for x in aud_tags:
 #   audio_source_list.append(x.get("data-src"))
-
-# gibberish_list = (q_soup.find_all(class_="audio-button"))
-
-# japanese_text = []
-
-# # Document() remains empty to make a new document, but needs the name called in "doc.save()" thereafter
-# doc = docx.Document()
-
-# doc.add_paragraph('Test from python placeholder 7')
-
-# counter1 = 0
-# for x in gibberish_list:
-#   question_marks = x.parent.text
-#   purified_line = ftfy.fix_encoding(question_marks)
-#   # question_marks = x.parent.text.encode('ascii', 'replace')
-#   # jpn_line = question_marks[0:-5]
-#   # slice gets rid of "play" at the end of 'em all
-#   jpn_line = purified_line[0:-5]
-#   if jpn_line:
-#     counter1 +=1
-#     fixed_japanese = (ftfy.fix_text(jpn_line))
-#     # doc.add_paragraph(fixed_japanese)
-#     japanese_text.append(fixed_japanese)
-
-
-# print(str(counter1) + " lines added to arr")
-# doc.save('t777.docx')
-
-# table_data = (q_soup.find_all("td"))
-# for x in table_data:
-#   x = x.encode('utf-8')
-#   print(x)
-#   print("--- --- --- ---")
-
-# from bs4 import BeautifulSoup
-# html = open("medium.html").read()
-# soup = BeautifulSoup(html)
-# tag = soup.find("div", text="inner")
-# print tag.find_parent('div')
-# OUTPUT
-# <div>middle
-#       <div>inner</div>
-# </div>
-
 # print(audio_source_list)
 
-# spider_strands = []
+# NOTE: purifying mojibake
+# doc = docx.Document()
+# for jpn in furi_list:
+  # purified_jpn = ftfy.fix_encoding(jpn)
+  # fixed_jpn = ftfy.fix_text(purified_jpn)
+  # doc.add_paragraph(purified_jpn)
+# doc.save('jpTest4.docx')
+
+# Purify mojibake with a given line variable: jpn_line
+# purified_jpn = ftfy.fix_encoding(jpn_line)
+# fixed_jpn = ftfy.fix_text(purified_jpn)
+
+# NOTE: .encode('utf-8') might be necessary if the doll's name has a weird char or backslash in their name...
 # for a in anchors:
 #   # titles will be buggy with special chars like a backslash
 #   buggytitle = a.get('title')
@@ -228,12 +213,6 @@ print(design_info_paragraph)
 # #   # tit = (a.get("title"))
 # #   # print(tit)
 #   print("-----------------")
-
-# for i in imgdata:
-#   # filter out captured images that have no tags, like banners
-#   if imgdata[i] and imgdata[i][-4:] != "safe":
-#     print(str(i) + "\n With data tags: \n " + str(imgdata[i]))
-#     print("~~~   ~~~   ~~~   ~~~")
 
 # class SoupExtractor:
 #   def __init__(self, main_url):
