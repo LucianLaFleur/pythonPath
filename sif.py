@@ -79,8 +79,11 @@ import re
 # re.sub("T-.*$", tdoll_name, index_url)
 
 # getting an attribute's content from a list of tags, then checking if they're a gif-type
-for x in soup.findAll('img'):
-    img_title = str(x.get("title"))
-    # gif type targeted here
-    if img_title[-4:] == ".gif":
-      found_gif_link = x.parent.get("href")
+# for x in soup.findAll('img'):
+#     img_title = str(x.get("title"))
+#     # gif type targeted here
+#     if img_title[-4:] == ".gif":
+#       found_gif_link = x.parent.get("href")
+
+# Handle un-printible chars by replacement:
+# txt_content.encode('ascii', 'replace')

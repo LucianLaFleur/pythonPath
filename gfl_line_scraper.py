@@ -33,8 +33,8 @@ def find_initial_data_from_soup(soup):
 # now we start extracting specific data from the html containing stuff we're interested in
 def get_names_from_data(data_list):
   name_list = []
-  #  Note !!! shortening this to test the first 4 names !!!
-  for x in data_list[0:4]:
+  # Can shorten data here if you [sl:ice] the data list!!!
+  for x in data_list:
     name = x.find("span", class_="name").text
     name_list.append(name)
   return name_list
@@ -49,34 +49,71 @@ def generate_urls_from_names(name_list, base_url):
 # Stuff for once you're on the character's webpage
 # !!! Grab the weapon background from the base doll's page
 def find_weapon_info(soup):
-  wep_info = soup.find(text="Weapon Background").find_next(text="Weapon Background").find_next('p').contents[0]
+  wep_info = soup.find(text="Weapon Background").find_next(text="Weapon Background").find_next('p').text
   return wep_info
 
+# get all text content until you run into an h2 tag
 def find_design_info(soup):
-  try:
+  # try:
     #design_note is var for design info bits
-    design_note = soup.find(id="Design").find_next('p').contents[0]
-    # print("design note: --- " + design_note)
+    design_note = ""
+    design_header = soup.find(id="Design")
+    p1 = design_header.next_element.next_element.next_element
+    design_note += p1.text
+    cou = 0
+    while True:
+      next_tag_type = p1.next_element.name
+      # end the loop when h2 is encountered
+      if next_tag_type == "h2":
+        # print("[+][+] --> h2 found! Ending design section search...")
+        break
+      elif next_tag_type == "p" or next_tag_type == "ul":
+        # print("----- text content: " )
+        txt_content = p1.next_element.text
+        try:
+          # get the text of the next element we're peeking at
+          design_note += txt_content
+        except:
+          # if weird chars show up, just give me question marks
+         txt_content = txt_content.encode('ascii', 'replace')
+         design_note += txt_content
+      elif cou >= 48:
+        print("loop exceeded 48 runs")
+        break
+      # else:
+        # print("ignored non-target tag...")
+      # make current element the next element
+      p1 = p1.next_element
+      # bump up saftey net counter
+      cou += 1
     return design_note
-  except:
-    print("No design info scanned for : " + tdoll_name)
-    return(None)
 
+# find all <li> 's since the entire data set is contained in them
 def find_trivia_info(soup):
   try:
-    # trivia_note is var for all trivia text bits
-    trivia_note = soup.find(id="Trivia").find_next('ul').find_all('li', recursive=False)
-    # print(trivia_note)
-    all_trivia_list = []
-    for x in trivia_note:
+    # trivia_bullets is list of all trivia text bits
+    trivia_bullets = soup.find(id="Trivia").find_next('ul').find_all('li', recursive=False)
+    trivia_paragraph = ""
+    # all_trivia_list = []
+    for x in trivia_bullets:
       bare_text = x.text.strip()
-      all_trivia_list.append(bare_text)
+      try:
+        trivia_paragraph += ("\t" + bare_text + '\n')
+      # all_trivia_list.append(bare_text)
       # print(bare_text + "\n")
-    return all_trivia_list
+      except:
+        bare_text = ("\t" + bare_text.encode('ascii', 'replace') + '\n')
+        trivia_paragraph += bare_text
+    # return all_trivia_list
+    return trivia_paragraph
   except:
-    print("no trivia details found for " + tdoll_name)
-    return(None)
+    return "no trivia details"
 
+# def extract_char_info(soup):
+#   x = find_weapon_info(soup)
+#   y = find_design_info(soup)
+#   z = find_trivia_info(soup)
+#   return [x, y, z]
 # Doll icon extaraction works, but I'm not using it for anything
 # def get_doll_icon_src(data_list): 
 #   doll_icon_list = []
@@ -88,12 +125,29 @@ def find_trivia_info(soup):
 # run that shit:
 tdoll_index_soup = get_soup(library_page)
 data_list = find_initial_data_from_soup(tdoll_index_soup)
-print("[ + ] added " + str(len(data_list)) + " items to index data array...")
+# print("[ + ] added " + str(len(data_list)) + " items to index data array...")
 # Add below dynamically to class
 name_list = get_names_from_data(data_list)
 # icon_list = get_doll_icon_src(data_list)
 char_pg_urls = generate_urls_from_names(name_list, base_url)
-print(char_pg_urls)
+# do the whole data-extraction gig in a for-each loop to go over all urls
+
+# t1 = char_pg_urls[69]
+t1 = "https://en.gfwiki.com/wiki/C96"
+
+print("testing character url at:  -> " + t1)
+test_soup = get_soup(t1)
+# captured design in --> design_info_paragraph
+design_info_paragraph = (find_design_info(test_soup))
+trivia_paragraph = (find_trivia_info(test_soup))
+print(design_info_paragraph)
+# print(find_weapon_info(test_soup))
+
+# print(find_weapon_info(test_soup))
+
+# test_extraction = extract_char_info(test_soup)
+# for x in test_extraction:
+#   print(name_list[69] + "\n" + x)
 
 # ////////////////
 
@@ -102,9 +156,6 @@ print(char_pg_urls)
 # # for img in soup.find_all('img'):
 # #   imgdata[(img.get('src'))] = img.get('title')
 
-
-
-  
 
 # ///////////////////////////////////
 
@@ -184,9 +235,13 @@ print(char_pg_urls)
 #     print(str(i) + "\n With data tags: \n " + str(imgdata[i]))
 #     print("~~~   ~~~   ~~~   ~~~")
 
-# 
-#
-# Save file as the tag list
+# class SoupExtractor:
+#   def __init__(self, main_url):
+#     self.main_url = main_url
+
+# cob1 =  SoupExtractor("https://en.gfwiki.com/wiki/C96")
+# cob1.main_soup = property(lambda self: get_soup(self.main_url))
+# print(find_design_info(cob1.main_soup))
 
 # things we want in our output document:
 #  T-doll name : tdoll_name

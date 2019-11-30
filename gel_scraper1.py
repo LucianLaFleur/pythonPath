@@ -7,7 +7,8 @@ import os
 
 # insert site url below
 
-# html_page = urllib2.urlopen("https://gelbooru.com/index.php?page=post&s=list&tags=j%40ck")
+# !!!!!
+# html_page = urllib2.urlopen(!!!!!!uRL goeS hERe)
 
 # grab the page data with "get"
 # resp = requests.get(url)
