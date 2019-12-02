@@ -176,82 +176,90 @@ t1_quote_soup = get_soup(test_quote_url)
 
 all_tbody_tags = t1_quote_soup.find_all("tbody")
 
-if len(all_tbody_tags) == 4:
-  # print("Regular quotes found")
-  general_quotes = all_tbody_tags[1]
-  combat_quotes = all_tbody_tags[2]
-  event_quotes = all_tbody_tags[3]
-# Make exception for additional tables for MOD3
-elif len(all_tbody_tags) == 7:
-  # print("Mod3 quotes found")
-  general_quotes = all_tbody_tags[1]
-  combat_quotes = all_tbody_tags[2]
-  event_quotes = all_tbody_tags[3]
-  mod3_general_quotes = all_tbody_tags[4]
-  mod3_combat_quotes = all_tbody_tags[5]
-  mod3_event_quotes = all_tbody_tags[6]
-else:
-  print("Irregular num of quote tables for " + t1)
+def check_quote_tables(all_tbody_tags):
+  if len(all_tbody_tags) == 4:
+    # print("Regular quotes found")
+    general_quotes = all_tbody_tags[1]
+    combat_quotes = all_tbody_tags[2]
+    event_quotes = all_tbody_tags[3]
+    all_quotes = [general_quotes, combat_quotes, event_quotes]
+    return all_quotes
+  # Make exception for additional tables for MOD3
+  elif len(all_tbody_tags) == 7:
+    # print("Mod3 quotes found")
+    general_quotes = all_tbody_tags[1]
+    combat_quotes = all_tbody_tags[2]
+    event_quotes = all_tbody_tags[3]
+    mod3_general_quotes = all_tbody_tags[4]
+    mod3_combat_quotes = all_tbody_tags[5]
+    mod3_event_quotes = all_tbody_tags[6]
+    all_quotes = [general_quotes, combat_quotes, event_quotes, mod3_general_quotes, mod3_combat_quotes, mod3_event_quotes]
+    return all_quotes
+  else:
+    print("Irregular num of quote tables for " + t1)
 
-# idx 0 should be title, 2 -> Japanese, 4 -> English
-# <tr>
-# <td style="background:rgba(0, 0, 0, 0.6)">Acquisition
-# </td>
-# <td style="background:rgba(0, 0, 0, 0.6)">???
-# </td>
-# <td style="background:rgba(0, 0, 0, 0.6)">???<span class="audio-button" data-src="https://en.gfwiki.com/images/f/f8/C96_GAIN_JP.ogg" style="display:block"><a href="/wiki/File:C96_GAIN_JP.ogg" title="File:C96 GAIN JP.ogg">Play</a></span>
-# </td>
-# <td style="background:rgba(0, 0, 0, 0.6)">???
-# </td>
-# <td style="background:rgba(0, 0, 0, 0.6)">You're my Commander, aren't you? </td></tr>
-
-
-gen_rows = general_quotes.find_all('tr')
+quote_tables = check_quote_tables(all_tbody_tags)
+print("Num of quote tables found: " + str((len(quote_tables))))
+# quote_tables[0,1,2] => general, combat, event
+# NOTE: TESTING, this [0] only tests the "general" table
+gen_rows = quote_tables[0].find_all('tr')
 # remove junk data in 0 idx row
+
 del gen_rows[0]
+print("length: " + str(len(gen_rows)) + " row entries detected")
+time.sleep(1)
 
 # NOTE: [  :::  ] incomplete [  :::  ]
 # ENCAPSULATE: for each item in the row table, extract row data and the audio
 # for each row in range(0, len(gen_rows))
 
 # get all the table-data from within the row
-rd_list = gen_rows[0].find_all("td")
+rowdata = gen_rows[8]
 
-# belowgets the audio src
-aud_href = gen_rows[4].find("a", text="Play").get("href")
-if aud_href:
-  aud_src = src_root + aud_href
-else:
-  aud_src = "No audio available"
+# below grabs the audio src
+def get_td_aud_src(rowdata):
+  aud_href = rowdata.find("a", text="Play").get("href")
+  if aud_href:
+    aud_src = src_root + aud_href
+  else:
+    aud_src = "No audio available"
+  return aud_src
 
-# UNUSED, not needed as title is in audiofile name ; checks for row title
-# if rd_list[0].text.strip():
-#   title_rd = rd_list[0].text.strip()
-# else:
-#   print("No title found")
-#   title_rd = "untitled row"
+aud_src = get_td_aud_src(rowdata)
+rd_list = rowdata.find_all("td")
 
-# check for JPN content
-if rd_list[2].text.strip():
-  jpn_rd = rd_list[2].text.strip()
-  # slice out the unneeded "play" text that appears
-  jpn_rd = jpn_rd[:-4]
-else:
-  print("No Jpn text found")
-  jpn_rd = "[-] No Jpn"
+# takes in a list of "td" from the soup, the row data, which gets sifted below
+def get_info_from_rows(rd_list):
+  # idx 0 should be title, 2 -> Japanese, 4 -> English
+  # UNUSED, not needed as title is in audiofile name ; checks for row title
+  # if rd_list[0].text.strip():
+  #   title_rd = rd_list[0].text.strip()
+  # else:
+  #   print("No title found")
+  #   title_rd = "untitled row"
+  # check for JPN content
+  if rd_list[2].text.strip():
+    jpn_rd = rd_list[2].text.strip()
+    # slice out the unneeded "play" text that appears
+    jpn_rd = jpn_rd[:-4]
+  else:
+    # print("No Jpn text found")
+    jpn_rd = "[-] No Jpn trans"
+  # check for English content
+  if rd_list[4].text.strip():
+    eng_rd = rd_list[4].text.strip()
+  else:
+    # print("No Eng text found")
+    end_rd = "[-] No Eng trans"
+  return [jpn_rd, eng_rd]
 
-# check for English content
-if rd_list[4].text.strip():
-  eng_rd = rd_list[4].text.strip()
-else:
-  print("No Eng text found")
-  end_rd = "[-] No Eng"
-
-print("testing extracted vals")
 print("---")
 time.sleep(1)
 #Title, Japanese, and translation successfully extracted!
-extracted_rd = [aud_src, jpn_rd, eng_rd]
+t_lines = get_info_from_rows(rd_list)
+  
+extracted_rd = [aud_src, t_lines[0], t_lines[1]]
+
 for x in extracted_rd:
   print(x.encode('ascii', 'replace'))
   print("~~~")
@@ -277,6 +285,8 @@ for x in extracted_rd:
 # for x in aud_tags:
 #   audio_source_list.append(x.get("data-src"))
 # print(audio_source_list)
+
+# ///////////////////////////////////
 
 # NOTE: purifying mojibake
 # doc = docx.Document()
