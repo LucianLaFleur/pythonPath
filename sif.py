@@ -10,6 +10,10 @@ import re
 # new = cutoff + "9"
 # print(new)
 
+#  force 2 digits to always show
+#     # zfill forces 2 digits to always appear
+#     t1.write(str(th).zfill(2)+ ":"+ str(tm).zfill(2)+":"+ str(ts).zfill(2), font=("arial", 40, "normal"))
+
 # create / generate range
 # Use the range to iterate over different pages to run 2 - 13 automated instead of doing each by hand
 #  .... .... . .. .. 
@@ -97,3 +101,8 @@ import re
 
 # find all sibling elements on a level
 # trivia_bullets = soup.find(id="Trivia").find_next('ul').find_all('li', recursive=False)
+
+# open shit from web browser
+# import webbrowser
+# url="https://www.youtube.com/watch?v=XI5Bvplb7pQ"
+# webbrowser.open(url)

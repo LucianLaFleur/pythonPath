@@ -1,43 +1,82 @@
-# import time
+import time
+import datetime 
+import colorama
+from colorama import Fore, Back, Style
+colorama.init()
+# from playsound import playsound
+import winsound
 
-# # s, m, hr placeholders
-# ts = 55
-# tm = 59
-# th = 1
+# winsound.PlaySound("clock_auds/1weirdNya.wav", winsound.SND_ASYNC)
 
-# while True:
-#     # zfill forces 2 digits to always appear
-#     print(str(th).zfill(2)+ ":"+ str(tm).zfill(2)+":"+ str(ts).zfill(2))
-#     ts += 1
-#     time.sleep(1)
-#     if ts == 60:
-#         ts = 0
-#         tm += 1
-#     if tm == 60:
-#         tm = 0
-#         th += 1
+# c_t = datetime.datetime.now()
 
-#  additions to construct Miss-HM's song for hour-counter
-#  westminster chimes 4 versions
-# For each hour "bong"
-#  https://www.youtube.com/watch?v=eEKUdugY6Yo 
-# Alt version with the sound of NTW firing?
+# tar_time = c_t.minute + 15
 
-# make presets "t" for 30 mins, "f" for fifteen, "h" for 1 hr
+# print(c_t)
+# print("curr min ... %s." % c_t.minute)
+# print("tar for chime ... %s." % tar_time)
+
+# /////////
+
+# POMIDORO
 # Adjust, run a pomidoro timer, 30 min work, 10 break
+#  how to open youtube from python? Check udemy classes
+# CLOCK TOWER RELATED TO REAL TIME
+#  track internal clock , playing nya each time hour?
+# check if the time.minute == 14 and time.second == 00
+# play chime
 
-print('Enter countdown seconds: ')
-in_num = input()
+# ////////////
+# NOTE: CURR GOAL: iterate out sound files to variables
+#  iterate out time buffer to variables
+current_time = datetime.datetime.now()
 
-# loop from ten to zero by a step of -1 each iteration 
-def countdown(in_num):
-    for i in range(in_num, 0, -1):
-        print(i)
+print("Start " + str(current_time.hour) + " : " + str(current_time.minute) + " : " + str(current_time.second))
+# put in update time adjust below, then for the sleep amount
+print("Beginning timer: updates every 5 mins \n ---")
 
-# input condiitionals, presets for 30 min or 1hr countdown, or custom input available
-
+elapsed_min = 0
+elapsed_quarters = 0
+elapsed_hr = 0
+while True:
+    #  move to 360 to be every 5 mins
+    time.sleep(5)
+    elapsed_min += 5
+    # 60 for each hr
+    if (elapsed_min % 60) == 0:
+        elapsed_quarters -= 3
+        elapsed_hr += 1
+        if elapsed_hr == 1:
+            # hourly chime
+            print(Fore.YELLOW + Back.CYAN + str(elapsed_hr) + Style.RESET_ALL + " hour elapsed " + Back.CYAN + "--- --- ---" + Style.RESET_ALL)
+            winsound.PlaySound("clock_auds/4weirdNya.wav", winsound.SND_FILENAME)
+            winsound.PlaySound("clock_auds/hourlyNya.wav", winsound.SND_ASYNC)
+        else: 
+            print(Fore.RED + Back.WHITE + str(elapsed_hr) + Style.RESET_ALL + " hours have elapsed " + Back.RED + "--- --- ---" + Style.RESET_ALL)
+            winsound.PlaySound("clock_auds/awooShort.wav", winsound.SND_FILENAME)
+        # play hour marker special aud
+    elif elapsed_min != 0 and elapsed_min % 15 == 0:
+        elapsed_quarters += 1
+        if elapsed_quarters == 1 :
+            # play audio for 1st carillion
+            winsound.PlaySound("clock_auds/1weirdNya.wav", winsound.SND_ASYNC)
+            #  text for 1st is same as 3rd quarter
+            print(Back.MAGENTA + str(elapsed_min) + Style.RESET_ALL + " min Completed!")
+        elif elapsed_quarters == 2:
+            # half carillion
+            winsound.PlaySound("clock_auds/2weirdNya.wav", winsound.SND_ASYNC)
+            print(Back.YELLOW + Fore.BLACK + str(elapsed_min) + Style.RESET_ALL + " min elapsed " + Back.YELLOW + "--- --- ---" + Style.RESET_ALL)
+        elif elapsed_quarters == 3:
+            # 3rd quarter carillion
+            winsound.PlaySound("clock_auds/3weirdNya.wav", winsound.SND_ASYNC)
+            # text for 3rd quarter same as 1st
+            print(Back.MAGENTA + str(elapsed_min) + Style.RESET_ALL + " min Completed!")
+        # play nyas based on elapsed time
+    else:
+        print(str(elapsed_min) + " min...")
 
 # ///////////
+# Stopwatch from Tkinter /////////////
 
 # from Tkinter import *
 # import time
@@ -122,6 +161,12 @@ def countdown(in_num):
 #         self.nextTime = 0.0
 #         self.SetTime(self.nextTime)
 
-
 # if __name__ == '__main__':
 #     Main()
+
+
+#  additions to construct Miss-HM's song for hour-counter
+#  westminster chimes 4 versions
+# For each hour "bong"
+#  https://www.youtube.com/watch?v=eEKUdugY6Yo 
+# Alt version with the sound of NTW firing?
