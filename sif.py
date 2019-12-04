@@ -89,6 +89,21 @@
 # if __name__ == '__main__':
 #     Main()
 
+# NOTE: general way to read/write a file
+# # will make a file, or overwrite one of the same name
+# def mk_f(f_name):
+# # defaults to making/opening the file in cwd
+#   with open(f_name, 'w') as f:
+#     f.write("I'm a ... " + p1)
+
+# mk_f("purchase_holder")
+  
+  # formatting for writing code to a text document from inside a program
+#   lines = []
+# lines.append('def print_success():')
+# lines.append('    print "sucesss"')
+# "\n".join(lines)
+
 # ///////////////
 
 # User input is obtained by [raw_input('prompt: )] in python 2.x
@@ -198,3 +213,51 @@
 # import webbrowser
 # url="https://www.youtube.com/watch?v=XI5Bvplb7pQ"
 # webbrowser.open(url)
+
+
+# # will make a file, or overwrite one of the same name
+# def mk_f(f_name, info_to_save):
+# # defaults to making/opening the file in cwd
+#   with open(f_name, 'w') as f:
+#     f.write(info_to_save)
+
+# # simple read function, returning all lines read
+# def rd_f_nreturn_lines(f_name):
+#   with open(f_name, 'r') as f:
+#     lines = f.readlines()
+#   return lines
+
+# def convert_dict_to_str(dict1):
+#   start_bracket = "{"
+#   big_string = ""
+#   end_bracket = "}"
+#   counter1 = 1
+#   for k in dict1:
+#     v = str(dict1[k])
+#     # don't add a comma if there's only one item or if you're at the last item
+#     if counter1 == len(dict1):
+#       big_string += (k + " : " + v)
+#     else:
+#       big_string += (k + " : " + v + ", ")
+#     counter1 += 1
+  
+#   string_dict = (start_bracket + big_string + end_bracket)
+#   return string_dict
+
+# current date and time in simple string format
+# datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+
+# def convert_list_to_str(l1):
+#   start_bracket = "["
+#   big_string = ""
+#   end_bracket = "]"
+#   counter1 = 1
+#   for i in l1:
+#     if counter1 == len(l1):
+#       big_string += str(l1[counter1-1])
+#     else:
+#       big_string += (str(l1[counter1-1]) + ", ")
+#     counter1 += 1
+  
+#   string_list = (start_bracket + big_string + end_bracket)
+#   return string_list

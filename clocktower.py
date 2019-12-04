@@ -23,23 +23,45 @@ print("curr min ... %s." % c_t.minute)
 while True:
   # constantly scan for the current time
   c_t = datetime.datetime.now()
-  if c_t.minute == 45:
+  # check for what hour it is
+  if c_t.minute == 0:
+    curr_hr = datetime.datetime.now().hour
+    # NOTE: custom chimes for hours can be set in the below conditional
+    winsound.PlaySound("clock_auds/westminster_hr.wav", winsound.SND_FILENAME)
+    # limit to 12 hours for the chime-bonging
+    if curr_hr > 12:
+      curr_hr = (curr_hr - 12)
+    # make a bong sound for each hour detected
+    for bong in range(0, curr_hr):
+      winsound.PlaySound("clock_auds/hourlyNya.wav", winsound.SND_FILENAME)
+    time.sleep(750)
+  elif c_t.minute == 45:
     # Aud plays on the 45 minute mark
-    winsound.PlaySound("clock_auds/3weirdNya.wav", winsound.SND_ASYNC)
+    winsound.PlaySound("clock_auds/westminster_45.wav", winsound.SND_ASYNC)
     # sleep almost 15 mins before checking again
     time.sleep(880)
   elif c_t.minute == 30:
-    winsound.PlaySound("clock_auds/2weirdNya.wav", winsound.SND_ASYNC)
+    winsound.PlaySound("clock_auds/westminster_30.wav", winsound.SND_ASYNC)
     # sleep almost 15 mins before checking again
     time.sleep(880)
   elif c_t.minute == 15:
-    winsound.PlaySound("clock_auds/2weirdNya.wav", winsound.SND_ASYNC)
+    winsound.PlaySound("clock_auds/westminster_15.wav", winsound.SND_ASYNC)
     # sleep almost 15 mins before checking again
     time.sleep(880)
 
-print("test over")
 
 # /////////
+# print(datetime.datetime.now().hour)
+# winsound.PlaySound("clock_auds/westminster_hr.wav", winsound.SND_FILENAME)
+
+# for bong in range(0, 3):
+#       winsound.PlaySound("clock_auds/hourlyNya.wav", winsound.SND_FILENAME)
+
+# time.sleep(10)
+
+# print("test over")
+
+# ///////////
 
 # POMIDORO
 # Adjust, run a pomidoro timer, 30 min work, 10 break

@@ -11,8 +11,7 @@ import re
 import time 
 # -*- coding: utf-8 -*-
 
-#  possible unicode in py3 ?
-# import win_unicode_console
+#  NOTE: This only scrapes a single page, and does not have the crawling functionality
 
 #  Need to work from base page, then find src_url
 
@@ -165,8 +164,6 @@ html_soup = get_html_soup(url)
 
 # audio_list = find_audio(html_soup)
 # furi_list = find_furi(html_soup)
-
-
 
 # Extract all engish translations and put them in an array?
 targeted_a_tags = find_link_tags_by_class(html_soup)
