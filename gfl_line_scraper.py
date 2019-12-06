@@ -136,9 +136,11 @@ def extract_char_info(soup):
   x = find_weapon_info(soup)
   y = find_design_info(soup)
   z = find_trivia_info(soup)
-  suite = ("---weapon design ---\n" + x + "\n --- Char design/attire --- \n" + y + "\n --- Trivia Bullets --- \n" + z).encode('ascii', 'replace')
+  raw_suite = ("---weapon design ---\n" + x + "\n --- Char design/attire --- \n" + y + "\n --- Trivia Bullets --- \n" + z)
   # NOTE: purifying mojibake??
-  return suite
+  purified__suite = ftfy.fix_encoding(raw_suite)
+  fixed_suite = ftfy.fix_text(purified__suite)
+  return fixed_suite
   # returns a paragraph-long string
 
 # Doll icon extaraction works, but I'm not using it for anything
@@ -149,33 +151,7 @@ def extract_char_info(soup):
 #     doll_icon_list.append(icon)
 #   return doll_icon_list
 
-# //// info extraction portion and method execution
-tdoll_index_soup = get_soup(library_page)
-data_list = find_initial_data_from_soup(tdoll_index_soup)
-# print("[ + ] added " + str(len(data_list)) + " items to index data array...")
-# Add below dynamically to class
-name_list = get_names_from_data(data_list)
-# icon_list = get_doll_icon_src(data_list)
-char_pg_urls = generate_urls_from_names(name_list, base_url)
-# do the whole data-extraction gig in a for-each loop to go over all urls
-
-# t1 = char_pg_urls[9]
-# mod3 included
-t1 = "https://en.gfwiki.com/wiki/M4_SOPMOD_II"
-# irregular, limited info, but normal num of tables, just some are absent content:
-# t1 = "https://en.gfwiki.com/wiki/Jill"
-# t1 = "https://en.gfwiki.com/wiki/C96"
-
-print("testing character url at:  -> " + t1)
-test_soup = get_soup(t1)
-# print("Processing character info...")
-char_info_suite = extract_char_info(test_soup)
-# NOTE: be sure to purify mojibake before printing the char_info_suite to a document, as the odd chars are currently ?'s
-test_quote_url = (t1 + "/Quotes")
-t1_quote_soup = get_soup(test_quote_url)
-
-all_tbody_tags = t1_quote_soup.find_all("tbody")
-
+# Functions for being on the unit's specific page:
 def check_quote_tables(all_tbody_tags):
   if len(all_tbody_tags) == 4:
     # print("Regular quotes found")
@@ -196,104 +172,160 @@ def check_quote_tables(all_tbody_tags):
     all_quotes = [general_quotes, combat_quotes, event_quotes, mod3_general_quotes, mod3_combat_quotes, mod3_event_quotes]
     return all_quotes
   else:
-    print("Irregular num of quote tables for " + t1)
-
-quote_tables = check_quote_tables(all_tbody_tags)
-print("Num of quote tables found: " + str((len(quote_tables))))
-# quote_tables[0,1,2] => general, combat, event
-# NOTE: TESTING, this [0] only tests the "general" table
-gen_rows = quote_tables[0].find_all('tr')
-# remove junk data in 0 idx row
-
-del gen_rows[0]
-print("length: " + str(len(gen_rows)) + " row entries detected")
-time.sleep(1)
-
-# NOTE: [  :::  ] incomplete [  :::  ]
-# ENCAPSULATE: for each item in the row table, extract row data and the audio
-# for each row in range(0, len(gen_rows))
-
-# get all the table-data from within the row
-rowdata = gen_rows[8]
+    print("Irregular num of quote tables")
+    time.sleep(3)
 
 # below grabs the audio src
 def get_td_aud_src(rowdata):
-  aud_href = rowdata.find("a", text="Play").get("href")
-  if aud_href:
+  try:
+    aud_href = rowdata.find("a", text="Play").get("href")
+  # if aud_href:
     aud_src = src_root + aud_href
-  else:
+  # else:
+  except:
     aud_src = "No audio available"
   return aud_src
 
-aud_src = get_td_aud_src(rowdata)
-rd_list = rowdata.find_all("td")
-
 # takes in a list of "td" from the soup, the row data, which gets sifted below
-def get_info_from_rows(rd_list):
-  # idx 0 should be title, 2 -> Japanese, 4 -> English
-  # UNUSED, not needed as title is in audiofile name ; checks for row title
-  # if rd_list[0].text.strip():
-  #   title_rd = rd_list[0].text.strip()
-  # else:
-  #   print("No title found")
-  #   title_rd = "untitled row"
-  # check for JPN content
-  if rd_list[2].text.strip():
-    jpn_rd = rd_list[2].text.strip()
-    # slice out the unneeded "play" text that appears
-    jpn_rd = jpn_rd[:-4]
-  else:
-    # print("No Jpn text found")
+def get_info_from_rowdata(rd_list):
+  try:
+    # scan for length of list, review HTML src
+    if len(rd_list) == 5:
+    # idx 0 should be title, 2 -> Japanese, 4 -> English
+    # UNUSED, not needed as title is in audiofile name ; checks for row title
+    # if rd_list[0].text.strip():
+    #   title_rd = rd_list[0].text.strip()
+    # else:
+    #   print("No title found")
+    #   title_rd = "untitled row"
+    # check for JPN content
+      if rd_list[2].text.strip():
+        jpn_rd = rd_list[2].text.strip()
+        # slice out the unneeded "play" text that appears
+        jpn_rd = jpn_rd[:-4]
+      else:
+        # print("No Jpn text found")
+        jpn_rd = "[-] No Jpn trans"
+      # check for English content
+      if rd_list[4].text.strip():
+        eng_rd = rd_list[4].text.strip()
+      else:
+        # print("No Eng text found")
+        end_rd = "[-] No Eng trans"
+      return [jpn_rd, eng_rd]
+      # if the row doesn't include a leftmost cat, then its length is reduced to 4, targets shift down 1
+      #  The "secretary" section makes this conditional necessary
+    elif len(rd_list) == 4:
+        if rd_list[1].text.strip():
+          jpn_rd = rd_list[1].text.strip()
+          jpn_rd = jpn_rd[:-4]
+        else:
+          jpn_rd = "[-] No Jpn trans"
+        if rd_list[3].text.strip():
+          eng_rd = rd_list[3].text.strip()
+        else:
+          end_rd = "[-] No Eng trans"
+        return [jpn_rd, eng_rd]
+    else:
+      print("irregular table row entry length detected")
+      time.sleep(3)
+  except:
+    # print("There appears to be no data there...")
     jpn_rd = "[-] No Jpn trans"
-  # check for English content
-  if rd_list[4].text.strip():
-    eng_rd = rd_list[4].text.strip()
-  else:
-    # print("No Eng text found")
-    end_rd = "[-] No Eng trans"
-  return [jpn_rd, eng_rd]
+    eng_rd = "[-] No Eng trans"
+    return [jpn_rd, eng_rd]
 
-print("---")
-time.sleep(1)
-#Title, Japanese, and translation successfully extracted!
-t_lines = get_info_from_rows(rd_list)
-  
-extracted_rd = [aud_src, t_lines[0], t_lines[1]]
+def write_rowdata_to_word(rowdata_list, doc):
+  purified_j_line = ftfy.fix_encoding(rowdata_list[1])
+  fixed_j_line = ftfy.fix_text(purified_j_line)
+  # Japanese should be idx 1 of the rd_list
+  doc.add_paragraph(rowdata_list[0])
+  doc.add_paragraph(fixed_j_line)
+  doc.add_paragraph(rowdata_list[2])
+  doc.add_paragraph(rowdata_list[3])
 
-for x in extracted_rd:
-  print(x.encode('ascii', 'replace'))
-  print("~~~")
+def process_table_rows(rows, doc):
+  # get rid of headers in first row
+  del rows[0]
+  # print("length: " + str(len(rows)) + " row entries detected")
+# NOTE: [  :::  ] incomplete [  :::  ]
+# ENCAPSULATE: for each item in the row table, extract row data and the audio
+  for n in range(0, len(rows)):
+    # get all the table-data from within the row
+    rowdata = rows[n]
+    # extract the audio link
+    aud_src = get_td_aud_src(rowdata)
+    rd_list = rowdata.find_all("td")
+    # get JPN and EN translation
+    t_lines = get_info_from_rowdata(rd_list)
+      
+    extracted_rd = [aud_src, t_lines[0], t_lines[1], ("Line: " + str(n) + " ------------------------------------------------")]
+    write_rowdata_to_word(extracted_rd, doc)
+    # show console what's being written to word document
+    # for x in extracted_rd:
+    #   print(x.encode('ascii', 'replace'))
+    # print("~~~ idx [" + str(n) + "] done, scanning next entry ~~~)")
+    # time.sleep(1)
 
+# //// info extraction portion and method execution
+tdoll_index_soup = get_soup(library_page)
+data_list = find_initial_data_from_soup(tdoll_index_soup)
+# print("[ + ] added " + str(len(data_list)) + " items to index data array...")
+name_list = get_names_from_data(data_list)
+#  NOTE: try to add paragraph icon src?
+# icon_list = get_doll_icon_src(data_list)
+char_pg_urls = generate_urls_from_names(name_list, base_url)
 
-# for x in gen_rows:
-#   try:
-#     print(x)
-#     print("---   end of row " + str(gr_idx) + " ---")
-#   except:
-#     print("skipped unprintible chars")
-#   gr_idx += 1
+# //////// Test links //////////
+# mod3 included
+# t1 = "https://en.gfwiki.com/wiki/M4_SOPMOD_II"
+# irregular, limited info, but normal num of tables, just some are absent content:
+# t1 = "https://en.gfwiki.com/wiki/Jill"
+# t1 = "https://en.gfwiki.com/wiki/C96"
+# //////// END: Test links //////////
 
-# ///////////////////////////////////
+# iterate over all named units
+# for x in range(0, len(name_list)):
+for x in range(118, 121):
+  curr_doll = name_list[x]
+  curr_url = char_pg_urls[x]
+  print("scanning info for " + curr_doll.encode('ascii', 'replace') + "  --> " + curr_url.encode('ascii', 'replace'))
+  time.sleep(1)
+  character_soup = get_soup(curr_url)
+  # print("grabbing character info, like trivia and background...")
+  char_info_suite = extract_char_info(character_soup)
+  quote_url = (curr_url + "/Quotes")
+  character_quote_soup = get_soup(quote_url)
 
-# quotes_link = url + "/Quotes"
-# # headers already declared at top of page
-# q_html = requests.get(quotes_link, headers=headers)
-# q_soup = bs(q_html.text, "html.parser")
+  all_tbody_tags = character_quote_soup.find_all("tbody")
 
-# audio_source_list = []
-# aud_tags = q_soup.select(".audio-button")
-# for x in aud_tags:
-#   audio_source_list.append(x.get("data-src"))
-# print(audio_source_list)
+  # make a new document for the unit
+  tdoc = docx.Document()
+  # give the name the doc will be saved under
+  word_output_filename = curr_doll.encode('ascii', 'ignore') + "_translations.docx"
+  # write the document's header and the info suite at the top of the page
+  tdoc.add_paragraph("Quotes for " + curr_doll + " : \n" + char_info_suite)
+  # extract all the quote tables from the char page
+  quote_tables = check_quote_tables(all_tbody_tags)
+  print("Num of quote tables found: " + str((len(quote_tables))))
+  # quote_tables[0,1,2] => general, combat, event, may have extra if mod3 is active
+  # Iterate over all detected tables
+  for x in range(0, len(quote_tables)):
+    gen_rows = quote_tables[x].find_all('tr')
+    process_table_rows(gen_rows, tdoc)
+  # save the document
+  tdoc.save(word_output_filename)
+
+print("---\n All scanning and printing successfully completed! ~ ~ ~")
 
 # ///////////////////////////////////
 
 # NOTE: purifying mojibake
 # doc = docx.Document()
 # for jpn in furi_list:
-  # purified_jpn = ftfy.fix_encoding(jpn)
-  # fixed_jpn = ftfy.fix_text(purified_jpn)
-  # doc.add_paragraph(purified_jpn)
+#   purified_jpn = ftfy.fix_encoding(jpn)
+#   fixed_jpn = ftfy.fix_text(purified_jpn)
+#   doc.add_paragraph(purified_jpn)
 # doc.save('jpTest4.docx')
 
 # Purify mojibake with a given line variable: jpn_line
@@ -301,31 +333,11 @@ for x in extracted_rd:
 # fixed_jpn = ftfy.fix_text(purified_jpn)
 
 # NOTE: .encode('utf-8') might be necessary if the doll's name has a weird char or backslash in their name...
-# for a in anchors:
-#   # titles will be buggy with special chars like a backslash
-#   buggytitle = a.get('title')
+#   buggytitle = atag.get('title')
 #   encodedtitle = buggytitle.encode('utf-8')
-#   spider_link = url + str(a.get('href'))
-#   print(encodedtitle)
-#   print(spider_link)
-#   # print(a.get('href'))
-# #   imgtag = a.get("img")
-# #   # tit = (a.get("title"))
-# #   # print(tit)
-#   print("-----------------")
-
-# class SoupExtractor:
-#   def __init__(self, main_url):
-#     self.main_url = main_url
-
-# cob1 =  SoupExtractor("https://en.gfwiki.com/wiki/C96")
-# cob1.main_soup = property(lambda self: get_soup(self.main_url))
-# print(find_design_info(cob1.main_soup))
 
 # things we want in our output document:
 #  T-doll name : tdoll_name
 # Japanese
 # English
 # audio link
-
-# [[j1,e1,aud1],[j2,e2,aud2]...], char2: [[...]...]
