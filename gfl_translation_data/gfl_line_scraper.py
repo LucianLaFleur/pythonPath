@@ -4,6 +4,7 @@ import ftfy
 import sys
 from bs4 import BeautifulSoup as bs
 import requests
+import io
 import os
 import re
 import time
@@ -131,6 +132,14 @@ def find_trivia_info(soup):
   except:
     return "[-] No trivia details"
 
+# Doll icon extaraction works
+def get_doll_icon_src(data_list): 
+  doll_icon_list = []
+  for x in data_list:
+    icon = x.find("img", class_="doll-image").get("src")
+    doll_icon_list.append(icon)
+  return doll_icon_list
+
 # Search all info units on the soup for the char's homepage
 def extract_char_info(soup):
   x = find_weapon_info(soup)
@@ -143,17 +152,11 @@ def extract_char_info(soup):
   return fixed_suite
   # returns a paragraph-long string
 
-# Doll icon extaraction works, but I'm not using it for anything
-# def get_doll_icon_src(data_list): 
-#   doll_icon_list = []
-#   for x in data_list[0:4]:
-#     icon = x.find("img", class_="doll-image").get("src")
-#     doll_icon_list.append(icon)
-#   return doll_icon_list
 
-# Functions for being on the unit's specific page:
+# NOTE: These don't necessarily have to be segregated to work, but the extra deliniaiton helps with clarity; presumed 6-tables are mod3
 def check_quote_tables(all_tbody_tags):
   if len(all_tbody_tags) == 4:
+    # Omits the [0] idx because it's irrelevant data
     # print("Regular quotes found")
     general_quotes = all_tbody_tags[1]
     combat_quotes = all_tbody_tags[2]
@@ -172,8 +175,13 @@ def check_quote_tables(all_tbody_tags):
     all_quotes = [general_quotes, combat_quotes, event_quotes, mod3_general_quotes, mod3_combat_quotes, mod3_event_quotes]
     return all_quotes
   else:
-    print("Irregular num of quote tables")
-    time.sleep(3)
+    # just add all results into an arr and return it
+    all_quotes = []
+    # Also omits [0] idx because it's irrelevant data
+    for x in range(1, len(all_tbody_tags)):
+      all_quotes.append(all_tbody_tags[x])
+    return all_quotes
+    time.sleep(1)
 
 # below grabs the audio src
 def get_td_aud_src(rowdata):
@@ -272,8 +280,7 @@ tdoll_index_soup = get_soup(library_page)
 data_list = find_initial_data_from_soup(tdoll_index_soup)
 # print("[ + ] added " + str(len(data_list)) + " items to index data array...")
 name_list = get_names_from_data(data_list)
-#  NOTE: try to add paragraph icon src?
-# icon_list = get_doll_icon_src(data_list)
+icon_list = get_doll_icon_src(data_list)
 char_pg_urls = generate_urls_from_names(name_list, base_url)
 
 # //////// Test links //////////
@@ -286,9 +293,11 @@ char_pg_urls = generate_urls_from_names(name_list, base_url)
 
 # iterate over all named units
 # for x in range(0, len(name_list)):
-for x in range(118, 121):
+for x in range(77, 79):
   curr_doll = name_list[x]
   curr_url = char_pg_urls[x]
+  curr_icon = icon_list[x]
+  print("---")
   print("scanning info for " + curr_doll.encode('ascii', 'replace') + "  --> " + curr_url.encode('ascii', 'replace'))
   time.sleep(1)
   character_soup = get_soup(curr_url)
@@ -303,11 +312,18 @@ for x in range(118, 121):
   tdoc = docx.Document()
   # give the name the doc will be saved under
   word_output_filename = curr_doll.encode('ascii', 'ignore') + "_translations.docx"
+  # GETTING THE DUMB ICON IMAGE, OK?
+  response = requests.get(curr_icon, stream=True)
+  icon_img = io.BytesIO(response.content)
+  tdoc.add_picture(icon_img)
   # write the document's header and the info suite at the top of the page
   tdoc.add_paragraph("Quotes for " + curr_doll + " : \n" + char_info_suite)
   # extract all the quote tables from the char page
   quote_tables = check_quote_tables(all_tbody_tags)
-  print("Num of quote tables found: " + str((len(quote_tables))))
+  try:
+    print("Num of quote tables found: " + str((len(quote_tables))))
+  except:
+    print("Irregul")
   # quote_tables[0,1,2] => general, combat, event, may have extra if mod3 is active
   # Iterate over all detected tables
   for x in range(0, len(quote_tables)):
