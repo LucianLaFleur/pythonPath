@@ -97,9 +97,20 @@ unit_urls = names_and_urls[1]
 turl = "https://kancolle.fandom.com/wiki/Iowa"
 p_soup = get_soup(turl)
 data_arr = get_all_info(p_soup)
-for x in data_arr:
-  print(len(x))
-  print("--- --- --- ---")
+
+# NOTE: incomplete: use this conditional to ignore dumb shit
+def check_quotelength(p_soup):
+  all_quotes = p_soup.find_all("tr", class_="shipquote")
+  for tag in all_quotes:
+    if tag.find("td", colspan="2"):
+      print("tard-span discovered")
+      print(tag.text.strip())
+      print("---")
+    # aud_arr.append(tag.find("a").get("href"))
+ 
+
+check_quotelength(p_soup)
+
 # cou1 = 0
 # for x in data_arr:
 #   print(str(cou1) + ": --- " + str(len(data_arr[x])))
