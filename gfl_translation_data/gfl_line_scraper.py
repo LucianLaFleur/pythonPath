@@ -292,8 +292,7 @@ char_pg_urls = generate_urls_from_names(name_list, base_url)
 # //////// END: Test links //////////
 
 # iterate over all named units
-# for x in range(0, len(name_list)):
-for x in range(77, 79):
+for x in range(0, len(name_list)):
   curr_doll = name_list[x]
   curr_url = char_pg_urls[x]
   curr_icon = icon_list[x]

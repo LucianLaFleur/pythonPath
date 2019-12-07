@@ -261,3 +261,7 @@
   
 #   string_list = (start_bracket + big_string + end_bracket)
 #   return string_list
+
+# regex re : match at least one thing after the total phrase (wiki/). without capturing the identifying phrase
+# this is called "a lookbehind assertion"
+# re.match("(?<=wiki/).+", src_url)
