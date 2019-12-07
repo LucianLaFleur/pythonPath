@@ -265,3 +265,11 @@
 # regex re : match at least one thing after the total phrase (wiki/). without capturing the identifying phrase
 # this is called "a lookbehind assertion"
 # re.match("(?<=wiki/).+", src_url)
+
+  # print all x's together, all y's and all z's
+    # d_arr = [x1, y1, z1],  [x2, y2, z2],  [x3, y3, z3]
+    # for y in range(0, len(data_arr[0])):
+    #   for x in range(0, 4):
+    #     print(data_arr[x][y].encode("ascii", "replace"))
+    #  similar to:  
+    #           zip(*data_arr)

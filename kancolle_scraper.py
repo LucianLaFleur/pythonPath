@@ -5,6 +5,8 @@ import time
 import docx
 import ftfy
 
+# NOTE: works on prinx eugen, but others doesn't scrape data right...
+
 # idx_url is the hub page linking to all units of interest
 idx_url = "https://kancolle.fandom.com/wiki/Ship"
 baseurl = "https://kancolle.fandom.com"
