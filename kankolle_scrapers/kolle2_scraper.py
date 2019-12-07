@@ -77,7 +77,7 @@ def crawl_across_urls(baseurl, unit_names, unit_urls):
     data_arr = get_all_info(p_soup)
     aligned_lines = zip(*data_arr)
     # personal preference for making filenames with underscore instead of space
-    fn = curr_name.replace(" ", "_")
+    fn = curr_name.replace(" ", "_").replace("/", "_or_")
     # make new document for each unit
     doc1 = docx.Document()
     for n in range(0, len(data_arr[1])):
@@ -92,11 +92,22 @@ names_and_urls = get_url_and_name_arrays(idx_url)
 unit_names = names_and_urls[0]
 unit_urls = names_and_urls[1]
 
-# Iterate over each url to get tabledata and extract
-# tar_tables = get_tables(url)
-# print("number of tables = "+ str(len(tar_tables)))
+# crawl_across_urls(baseurl, unit_names, unit_urls)
 
-crawl_across_urls(baseurl, unit_names, unit_urls)
+turl = "https://kancolle.fandom.com/wiki/Iowa"
+p_soup = get_soup(turl)
+data_arr = get_all_info(p_soup)
+for x in data_arr:
+  print(len(x))
+  print("--- --- --- ---")
+# cou1 = 0
+# for x in data_arr:
+#   print(str(cou1) + ": --- " + str(len(data_arr[x])))
+#   cou1 += 1
+
+# aligned_lines = zip(*data_arr)
+print("---")
+print("[+] All data successfully grabbed!")
 
 #  //// sample //////////
 # url = "https://kancolle.fandom.com/wiki/Shimushu"
