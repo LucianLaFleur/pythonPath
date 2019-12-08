@@ -273,3 +273,29 @@
     #     print(data_arr[x][y].encode("ascii", "replace"))
     #  similar to:  
     #           zip(*data_arr)
+
+# replace unprintable char to console
+ # for y in range(0, len(data_arr[0])):
+    #   for x in range(0, 4):
+    #     print(data_arr[x][y].encode("ascii", "replace"))
+    # e.g.
+    # print(data_arr[3][-1])
+
+# use a target string to split a substring
+# for x in test_urls:
+#   n1, n2, n3 = x.partition('wiki/')
+#   name = n3.replace("_", " ")
+#   print(name + "\n---")
+
+# seen_names = {}
+# multi_names = []
+# for x in unit_names:
+#     if x not in seen_names:
+#       # assign unique names to a dictionary, give it value 1 as a counter
+#       seen_names[x] = 1
+#     else: 
+#       if seen_names[x] == 1:
+#         multi_names.append(x)
+#       seen_names[x] += 1
+      
+# print(multi_names)

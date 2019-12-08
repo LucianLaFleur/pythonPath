@@ -78,11 +78,15 @@ def get_j_lines(good_tags):
 def get_en_lines(good_tags):
   en_arr = []
   for tag in good_tags:
-    en_line = tag.find("td", class_="shipquote-en").text.strip()
-    # have to purify foreign chars even in en lines...
-    purified_line = ftfy.fix_encoding(en_line)
-    fixed_en_line = ftfy.fix_text(purified_line)
-    en_arr.append(fixed_en_line)
+    has_eng = tag.find("td", class_="shipquote-en")
+    if has_eng:
+      en_line = has_eng.text.strip()
+      # have to purify foreign chars even in en lines...
+      purified_line = ftfy.fix_encoding(en_line)
+      fixed_en_line = ftfy.fix_text(purified_line)
+      en_arr.append(fixed_en_line)
+    else:
+      en_arr.append("No EN available, check page")
   # print(en_arr[28])
   return en_arr
 
@@ -106,21 +110,33 @@ def get_and_write_data(good_tags, doc):
 
 def process_season_tag(tag):
 # get header
-  l1 = tag.find_all("a")
-  header = l1[0].text
+  try:
+    l1 = tag.find_all("a")
+    header = l1[0].text
+  except:
+    header = "[-] no header"
 # get audio
-  l2 = tag.find("a", class_="internal")
-  aud_link = l2.get("href")
+  try:
+    l2 = tag.find("a", class_="internal")
+    aud_link = l2.get("href")
+  except:
+    aud_link = "[-] no audio"
 # get jp
-  jp_data_tag = (tag.findNext("td"))
-  jp_txt = jp_data_tag.text.strip()
-  purified_line = ftfy.fix_encoding(jp_txt)
-  fixed_j_line = ftfy.fix_text(purified_line)
+  try:
+    jp_data_tag = (tag.findNext("td"))
+    jp_txt = jp_data_tag.text.strip()
+    purified_line = ftfy.fix_encoding(jp_txt)
+    fixed_j_line = ftfy.fix_text(purified_line)
+  except:
+    fixed_j_line = "[-] no Japanese"
 # get en
-  en1 = jp_data_tag.findNext("td")
-  en_txt = en1.text.strip()
-  purified_en_line = ftfy.fix_encoding(en_txt)
-  fixed_en_line = ftfy.fix_text(purified_en_line)
+  try:
+    en1 = jp_data_tag.findNext("td")
+    en_txt = en1.text.strip()
+    purified_en_line = ftfy.fix_encoding(en_txt)
+    fixed_en_line = ftfy.fix_text(purified_en_line)
+  except:
+    fixed_en_line = "[-] no English"
   return[header, aud_link, fixed_j_line, fixed_en_line]
 
 def write_season_data(d_list, doc):
@@ -130,64 +146,80 @@ def write_season_data(d_list, doc):
 
 def get_seasonal_quotes(p_soup, doc1):
   season_tags = []
-  season_table = p_soup.find("span", id="Seasonal_Quotes").parent.findNext("table")
-  all_rows = season_table.find_all("tr")
-  # get rid of initial header cells by slicing with 1 as the start point, eliminate last row irrelevant line
-  for row in all_rows[1:-1]:
-    if row.get("style") != "display:none":
-      # placeholder for cell data within the rows...
-      x1 = row.find_all("td")
-      seasonal_data_list = process_season_tag(x1[0])
-      write_season_data(seasonal_data_list, doc1)
+  # If the season table is not a NoneType, scan info
+  season_section = p_soup.find("span", id="Seasonal_Quotes")
+  if season_section:
+    season_table = p_soup.find("span", id="Seasonal_Quotes").parent.findNext("table")
+    all_rows = season_table.find_all("tr")
+    # get rid of initial header cells by slicing with 1 as the start point, eliminate last row irrelevant line
+    for row in all_rows[1:-1]:
+      if row.get("style") != "display:none":
+        # placeholder for cell data within the rows...
+        x1 = row.find_all("td")
+        seasonal_data_list = process_season_tag(x1[0])
+        write_season_data(seasonal_data_list, doc1)
   return season_tags
   
 # ///////////////
 
-# def crawl_across_urls(baseurl, unit_names, unit_urls):
-#   for x in range(0, len(unit_urls)):
-#     curr_url = (baseurl + unit_urls[x])
-#     curr_name = unit_names[x]
-    # print("[+] " + curr_name + " ---- ")
-    # p_soup = get_soup(curr_url)
-    # # The check returns good tags
-    # good_tags = check_quotelength(p_soup)
-    # # personal preference for making filenames with underscore instead of space
-    # fn = curr_name.replace(" ", "_").replace("/", "_or_")
-    # # make new document for each unit
-    # doc1 = docx.Document()
-    # get_and_write_data(good_tags, doc1)
-    # !!!!!!!!!
-    # get_seasonal_quotes(p_soup, doc1)
-    # doc1.save(fn + ".docx")
+def crawl_across_urls(baseurl, unit_names, unit_urls):
+  for x in range(0, len(unit_urls)):
+    curr_url = (baseurl + unit_urls[x])
+    curr_name = unit_names[x]
+    print("[+] " + curr_name + " ---- ")
+    p_soup = get_soup(curr_url)
+    # The check returns good tags
+    good_tags = check_quotelength(p_soup)
+    # personal preference for making filenames with underscore instead of space, slashes mess up pathing but are included in some names, meaning "or".
+    fn = curr_name.replace(" ", "_").replace("/", "_or_")
+    # make new document for each unit
+    doc1 = docx.Document()
+    get_and_write_data(good_tags, doc1)
+    # !!! need to grab season quotes on a different targeting paradigm
+    get_seasonal_quotes(p_soup, doc1)
+    doc1.save(fn + ".docx")
 
 # Process execution ///////////////
 names_and_urls = get_url_and_name_arrays(idx_url)
 unit_names = names_and_urls[0]
 unit_urls = names_and_urls[1]
 # The big function that runs it all -->
-# !!!!!!!!!
-# crawl_across_urls(baseurl, unit_names, unit_urls)
+# !!! successfully grabbed up to 88
+#  273 total ships
+crawl_across_urls(baseurl, unit_names, unit_urls)
 # This will take a while to crawl acrss the links
-# print("[+] All data successfully grabbed!")
+print("[+] All data successfully grabbed!")
+
+# /// discover duplicate names among units...
+# seen_names = {}
+# multi_names = []
+# for x in unit_names:
+#     if x not in seen_names:
+#       # assign unique names to a dictionary, give it value 1 as a counter
+#       seen_names[x] = 1
+#     else: 
+#       if seen_names[x] == 1:
+#         multi_names.append(x)
+#       seen_names[x] += 1
+      
+# print(multi_names)
+
+# ////////// testing sesonal targeting paradigm with single urls
 
 # url = "https://kancolle.fandom.com/wiki/Warspite"
 # url = "https://kancolle.fandom.com/wiki/Prinz_Eugen"
-url ="https://kancolle.fandom.com/wiki/Akagi"
-p_soup = get_soup(url)
+# url ="https://kancolle.fandom.com/wiki/Akagi"
+# p_soup = get_soup(url)
 
-fn = "Akagi"
-good_tags = check_quotelength(p_soup)
-doc1 = docx.Document()
-get_and_write_data(good_tags, doc1)
-get_seasonal_quotes(p_soup, doc1)
-doc1.save(fn + ".docx")
+# fn = "Akagi"
+# good_tags = check_quotelength(p_soup)
+# doc1 = docx.Document()
+# get_and_write_data(good_tags, doc1)
+# get_seasonal_quotes(p_soup, doc1)
+# doc1.save(fn + ".docx")
 
   # /// sample tag data ////
   # <td> <a href="/wiki/Seasonal/Christmas_2015" title="Seasonal/Christmas 2015">Christmas 2015</a><br/><span class="audio-button"><a class="internal" href="https://vignette.wikia.nocookie.net/kancolle/images/3/37/Akagi_Christmas_2015.ogg/revision/latest?cb=20151208065750" title="Akagi Christmas 2015.ogg">Play</a></span>\n</td>, <td><span lang="ja" style="font-family: sans-serif;">\u3053\u308c\u306f...! \u304a\u3044\u3057\u3063\uff01\u3053\u308c\u3082\u3001\u30af\u30ea\u30b9\u30de\u30b9...! \u3044\u3044\u3067\u3059\u306d\u3002\u3042\u3063\u3001\u52a0\u8cc0\u3055\u3093\u3082\u3001\u98df\u3079\u3066\u307e\u3059\uff1f</span>\n</td>, <td>This is... Delicious. These are Christmas indeed. Ah, would you like some, Kaga-san?\n</td>, <td>\n</td>
-
-
-# //// Single page exceptional test works ///
-
 
 #  //// sample tag from goodtags //////////
 
@@ -272,21 +304,7 @@ doc1.save(fn + ".docx")
 #         doc1.add_paragraph(fixed_line)
 #     doc1.save(fn + ".docx")
 
-
 # turl = "https://kancolle.fandom.com/wiki/Iowa"
 # p_soup = get_soup(turl)
 # data_arr = get_all_info(p_soup)
 # aligned_lines = zip(*data_arr)
-
-# /////
-
- # for y in range(0, len(data_arr[0])):
-    #   for x in range(0, 4):
-    #     print(data_arr[x][y].encode("ascii", "replace"))
-    # e.g.
-    # print(data_arr[3][-1])
-
-# for x in test_urls:
-#   n1, n2, n3 = x.partition('wiki/')
-#   name = n3.replace("_", " ")
-#   print(name + "\n---")
