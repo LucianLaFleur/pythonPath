@@ -16,11 +16,11 @@ def get_soup(url):
   html_page = requests.get(url, headers=headers)
   return bs(html_page.text, "html.parser")
 
-def get_tables(url):
-  p_soup = get_soup(url)
-  all_tables = p_soup.find_all("table", class_="wikitable")
-  tar_tables = all_tables[0:3]
-  return tar_tables
+# def get_tables(url):
+#   p_soup = get_soup(url)
+#   all_tables = p_soup.find_all("table", class_="wikitable")
+#   tar_tables = all_tables[0:3]
+#   return tar_tables
 
 def get_url_and_name_arrays(idx_url):
   names_arr = []
@@ -79,7 +79,10 @@ def get_en_lines(good_tags):
   en_arr = []
   for tag in good_tags:
     en_line = tag.find("td", class_="shipquote-en").text.strip()
-    en_arr.append(en_line)
+    # have to purify foreign chars even in en lines...
+    purified_line = ftfy.fix_encoding(en_line)
+    fixed_en_line = ftfy.fix_text(purified_line)
+    en_arr.append(fixed_en_line)
   # print(en_arr[28])
   return en_arr
 
@@ -103,12 +106,10 @@ def get_and_write_data(good_tags, doc):
 
 # ///////////////
 
-def crawl_across_urls(baseurl, unit_names, unit_urls):
-  for x in range(0, len(unit_urls)):
-    curr_url = (baseurl + unit_urls[x])
-    curr_name = unit_names[x]
-  for y2 in unit_names:
-    print(y2)
+# def crawl_across_urls(baseurl, unit_names, unit_urls):
+#   for x in range(0, len(unit_urls)):
+#     curr_url = (baseurl + unit_urls[x])
+#     curr_name = unit_names[x]
     # print("[+] " + curr_name + " ---- ")
     # p_soup = get_soup(curr_url)
     # # The check returns good tags
@@ -125,9 +126,57 @@ names_and_urls = get_url_and_name_arrays(idx_url)
 unit_names = names_and_urls[0]
 unit_urls = names_and_urls[1]
 # The big function that runs it all -->
-crawl_across_urls(baseurl, unit_names, unit_urls)
+# !!!!!!!!!
+# crawl_across_urls(baseurl, unit_names, unit_urls)
 # This will take a while to crawl acrss the links
-print("[+] All data successfully grabbed!")
+# print("[+] All data successfully grabbed!")
+
+# url = "https://kancolle.fandom.com/wiki/Warspite"
+# url = "https://kancolle.fandom.com/wiki/Prinz_Eugen"
+url ="https://kancolle.fandom.com/wiki/Akagi"
+p_soup = get_soup(url)
+
+#:::: INCOMPLETE:::
+def process_season_tag(tag):
+# get header
+  l1 = tag.find_all("a")
+  header = l1[0].text
+# get audio
+  l2 = tag.find("a", class_="internal")
+  aud_link = l2.get("href")
+# get jp
+  jp_data_tag = (tag.findNext("td"))
+  jp_txt = jp_data_tag.text
+  purified_line = ftfy.fix_encoding(jp_txt)
+  fixed_j_line = ftfy.fix_text(purified_line)
+# get en
+  en1 = jp_data_tag.findNext("td")
+  print(en1)
+  # return(header, aud_link, fixed_j_line, en_line)
+
+
+# def print_season_data_to_doc(d_chunk)
+
+def target_seasonal_quotes(p_soup):
+  season_tags = []
+  season_table = p_soup.find("span", id="Seasonal_Quotes").parent.findNext("table")
+  all_rows = season_table.find_all("tr")
+  # get rid of initial header cells by slicing with 1 as the start point, eliminate last row irrelevant line
+  for row in all_rows[1:-1]:
+    if row.get("style") != "display:none":
+      x1 = row.find_all("td")
+      # NOTE: x1 is a fucking list
+      # for i in range(0, len(x1)):
+      process_season_tag(x1[0])
+      # /////////
+      # season_tags.append(x1)
+      print("---")
+  return season_tags
+
+  # /// sample tag data ////
+  # <td> <a href="/wiki/Seasonal/Christmas_2015" title="Seasonal/Christmas 2015">Christmas 2015</a><br/><span class="audio-button"><a class="internal" href="https://vignette.wikia.nocookie.net/kancolle/images/3/37/Akagi_Christmas_2015.ogg/revision/latest?cb=20151208065750" title="Akagi Christmas 2015.ogg">Play</a></span>\n</td>, <td><span lang="ja" style="font-family: sans-serif;">\u3053\u308c\u306f...! \u304a\u3044\u3057\u3063\uff01\u3053\u308c\u3082\u3001\u30af\u30ea\u30b9\u30de\u30b9...! \u3044\u3044\u3067\u3059\u306d\u3002\u3042\u3063\u3001\u52a0\u8cc0\u3055\u3093\u3082\u3001\u98df\u3079\u3066\u307e\u3059\uff1f</span>\n</td>, <td>This is... Delicious. These are Christmas indeed. Ah, would you like some, Kaga-san?\n</td>, <td>\n</td>
+
+season_lines = target_seasonal_quotes(p_soup)
 
 # //// Single page exceptional test works ///
 
