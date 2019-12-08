@@ -104,6 +104,43 @@ def get_and_write_data(good_tags, doc):
     # print(en_lines[x])
   print("Finished writing unit report, moving on...")
 
+def process_season_tag(tag):
+# get header
+  l1 = tag.find_all("a")
+  header = l1[0].text
+# get audio
+  l2 = tag.find("a", class_="internal")
+  aud_link = l2.get("href")
+# get jp
+  jp_data_tag = (tag.findNext("td"))
+  jp_txt = jp_data_tag.text.strip()
+  purified_line = ftfy.fix_encoding(jp_txt)
+  fixed_j_line = ftfy.fix_text(purified_line)
+# get en
+  en1 = jp_data_tag.findNext("td")
+  en_txt = en1.text.strip()
+  purified_en_line = ftfy.fix_encoding(en_txt)
+  fixed_en_line = ftfy.fix_text(purified_en_line)
+  return[header, aud_link, fixed_j_line, fixed_en_line]
+
+def write_season_data(d_list, doc):
+  doc.add_paragraph("-------" + d_list[0] + "---------------------")
+  for datum in range(1, 4):
+    doc.add_paragraph(d_list[datum])
+
+def get_seasonal_quotes(p_soup, doc1):
+  season_tags = []
+  season_table = p_soup.find("span", id="Seasonal_Quotes").parent.findNext("table")
+  all_rows = season_table.find_all("tr")
+  # get rid of initial header cells by slicing with 1 as the start point, eliminate last row irrelevant line
+  for row in all_rows[1:-1]:
+    if row.get("style") != "display:none":
+      # placeholder for cell data within the rows...
+      x1 = row.find_all("td")
+      seasonal_data_list = process_season_tag(x1[0])
+      write_season_data(seasonal_data_list, doc1)
+  return season_tags
+  
 # ///////////////
 
 # def crawl_across_urls(baseurl, unit_names, unit_urls):
@@ -119,6 +156,8 @@ def get_and_write_data(good_tags, doc):
     # # make new document for each unit
     # doc1 = docx.Document()
     # get_and_write_data(good_tags, doc1)
+    # !!!!!!!!!
+    # get_seasonal_quotes(p_soup, doc1)
     # doc1.save(fn + ".docx")
 
 # Process execution ///////////////
@@ -136,55 +175,19 @@ unit_urls = names_and_urls[1]
 url ="https://kancolle.fandom.com/wiki/Akagi"
 p_soup = get_soup(url)
 
-#:::: INCOMPLETE:::
-def process_season_tag(tag):
-# get header
-  l1 = tag.find_all("a")
-  header = l1[0].text
-# get audio
-  l2 = tag.find("a", class_="internal")
-  aud_link = l2.get("href")
-# get jp
-  jp_data_tag = (tag.findNext("td"))
-  jp_txt = jp_data_tag.text
-  purified_line = ftfy.fix_encoding(jp_txt)
-  fixed_j_line = ftfy.fix_text(purified_line)
-# get en
-  en1 = jp_data_tag.findNext("td")
-  print(en1)
-  # return(header, aud_link, fixed_j_line, en_line)
-
-
-# def print_season_data_to_doc(d_chunk)
-
-def target_seasonal_quotes(p_soup):
-  season_tags = []
-  season_table = p_soup.find("span", id="Seasonal_Quotes").parent.findNext("table")
-  all_rows = season_table.find_all("tr")
-  # get rid of initial header cells by slicing with 1 as the start point, eliminate last row irrelevant line
-  for row in all_rows[1:-1]:
-    if row.get("style") != "display:none":
-      x1 = row.find_all("td")
-      # NOTE: x1 is a fucking list
-      # for i in range(0, len(x1)):
-      process_season_tag(x1[0])
-      # /////////
-      # season_tags.append(x1)
-      print("---")
-  return season_tags
+fn = "Akagi"
+good_tags = check_quotelength(p_soup)
+doc1 = docx.Document()
+get_and_write_data(good_tags, doc1)
+get_seasonal_quotes(p_soup, doc1)
+doc1.save(fn + ".docx")
 
   # /// sample tag data ////
   # <td> <a href="/wiki/Seasonal/Christmas_2015" title="Seasonal/Christmas 2015">Christmas 2015</a><br/><span class="audio-button"><a class="internal" href="https://vignette.wikia.nocookie.net/kancolle/images/3/37/Akagi_Christmas_2015.ogg/revision/latest?cb=20151208065750" title="Akagi Christmas 2015.ogg">Play</a></span>\n</td>, <td><span lang="ja" style="font-family: sans-serif;">\u3053\u308c\u306f...! \u304a\u3044\u3057\u3063\uff01\u3053\u308c\u3082\u3001\u30af\u30ea\u30b9\u30de\u30b9...! \u3044\u3044\u3067\u3059\u306d\u3002\u3042\u3063\u3001\u52a0\u8cc0\u3055\u3093\u3082\u3001\u98df\u3079\u3066\u307e\u3059\uff1f</span>\n</td>, <td>This is... Delicious. These are Christmas indeed. Ah, would you like some, Kaga-san?\n</td>, <td>\n</td>
 
-season_lines = target_seasonal_quotes(p_soup)
 
 # //// Single page exceptional test works ///
 
-# fn = "Iowa"
-# good_tags = check_quotelength(p_soup)
-# doc1 = docx.Document()
-# get_and_write_data(good_tags, doc1)
-# doc1.save(fn + ".docx")
 
 #  //// sample tag from goodtags //////////
 
